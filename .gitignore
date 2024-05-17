@@ -7,6 +7,9 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+ddx-dataset/
+.DS_Store
+project_env/
 .Python
 build/
 develop-eggs/
