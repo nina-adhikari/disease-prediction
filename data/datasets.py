@@ -5,9 +5,41 @@ import warnings
 
 DATA_DIR = ''
 
+DISEASES = ['HIV (initial infection)', 'Whooping cough', 'Chagas',
+    'Tuberculosis', 'Ebola', 'Influenza',
+    'SLE', 'Sarcoidosis', 'Anaphylaxis',
+    'Allergic sinusitis', 'Localized edema']
+
+DISEASES_FR = ['VIH (Primo-infection)', 'Coqueluche', 'Chagas',
+    'Tuberculose', 'Ebola', 'Possible influenza ou syndrome virémique typique',
+    'Lupus érythémateux disséminé (LED)', 'Sarcoïdose', 'Anaphylaxie',
+    'Rhinite allergique', 'Oedème localisé ou généralisé sans atteinte pulmonaire associée']
+
 SYMPTOMS_WITH_STR_ENTRIES = ['trav1', 'lesion_larger_than_1cm', 'lesions_peeling',
-                                'pain_char', 'lesion_color', 'pain_somewhere',
-                                'pain_radiate', 'lesion_location', 'swelling_location']
+    'pain_char', 'lesion_color', 'pain_somewhere',
+    'pain_radiate', 'lesion_location', 'swelling_location']
+
+REPLACE_DICT = {
+    'AGE': 'unknown',
+    'pain_char': 'NA',
+    'pain_somewhere': 'nowhere',
+    'pain_radiate': 'nowhere',
+    'pain_intensity': '0',
+    'pain_precise': '0',
+    'pain_sudden': '0',
+    'lesion_color': 'NA',
+    'lesion_location': 'nowhere',
+    'lesions_peeling': 'N',
+    'lesion_pain_swollen': '0',
+    'lesion_larger_than_1cm': 'N',
+    'lesion_pain_intense': '0',
+    'swelling_location': 'nowhere',
+    'trav1': 'N',
+    'itching_severity': '0'
+}
+
+INTEGER_COLS = ['AGE', 'pain_intensity', 'pain_precise', 'pain_sudden',
+                'lesion_pain_swollen', 'lesion_pain_intense', 'itching_severity']
 
 conditions = pd.DataFrame()
 evidences = pd.DataFrame()
@@ -18,7 +50,7 @@ def set_dir(directory):
     DATA_DIR = directory
 
 def load_metadata(directory = DATA_DIR):
-    global DATA_DIR, conditions, evidences, evidences_en 
+    global DATA_DIR, conditions, evidences, evidences_en
     DATA_DIR = directory
     conditions = pd.read_json(DATA_DIR + 'release_conditions.json').transpose()
     evidences = pd.read_json(DATA_DIR + 'release_evidences.json').transpose().rename(columns={'possible-values': 'possible_values'})
@@ -50,13 +82,15 @@ def pad_list(l):
 
 class DiagDataFrame(pd.DataFrame):
 
-    def __init__(self, csv, ddx = False, *args, **kwargs):
-        super().__init__(pd.read_csv(csv), *args, **kwargs)
-        self.ddx = ddx
+    _metadata = ["ddx"]
+
+    def __init__(self, *args, **kwargs):
+        self.ddx = kwargs.pop('ddx', False)
+        super().__init__(*args, **kwargs)
+
+    def format_and_translate(self):
         if self.ddx:
             self.dds_to_dicts()
-        else:
-            self.drop(columns=['DIFFERENTIAL_DIAGNOSIS'], inplace=True)
         self.evidences_to_lists()
         self.evidences_to_dicts()
         with warnings.catch_warnings():
@@ -64,7 +98,12 @@ class DiagDataFrame(pd.DataFrame):
             self.expand_evidences()
         self.rename_symptoms()
         self.translate_to_english()
-    
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.replace_values()
+        self.fillna(0, inplace=True)
+        self.to_integers()
+
     def dds_to_dicts(self):
         self['DIFFERENTIAL_DIAGNOSIS'] = [dict(ast.literal_eval(thing)) for thing in self['DIFFERENTIAL_DIAGNOSIS'].values]
 
@@ -76,7 +115,6 @@ class DiagDataFrame(pd.DataFrame):
 
     def expand_evidences(self):
         temp = pd.DataFrame(self.pop('EVIDENCES').values.tolist())
-        temp.fillna(0, inplace=True)
         for column in temp.columns:
             self[column] = temp[column]
 
@@ -99,12 +137,39 @@ class DiagDataFrame(pd.DataFrame):
         for column in SYMPTOMS_WITH_STR_ENTRIES:
             self[column] = [get_english(column, thing) for thing in self[column].values]
 
+    def replace_values(self):
+        for column in self.columns:
+            if column in REPLACE_DICT:
+                self.loc[self[column].isnull(), column] = REPLACE_DICT[column]
 
-def load_datasets(subsets=['train', 'validate', 'test'], ddx=False, directory=DATA_DIR):
+    def to_integers(self):
+        for column in self.columns:
+            if column in SYMPTOMS_WITH_STR_ENTRIES + ['SEX', 'PATHOLOGY', 'INITIAL_EVIDENCE']:
+                continue
+            self[column] = self[column].astype('int64')
+
+    def _constructor(self, *args, **kwargs):
+        return DiagDataFrame(*args, **kwargs)
+
+def load_csv(filename, diseases=DISEASES_FR, ddx=False):
+    if ddx:
+        loader = pd.read_csv(filename, iterator=True, chunksize=10000)
+    else:
+        loader = pd.read_csv(filename, iterator=True, chunksize=10000,
+                            usecols=lambda x: x != "DIFFERENTIAL_DIAGNOSIS")
+    ddf = DiagDataFrame(pd.concat([chunk[chunk['PATHOLOGY'].isin(diseases)] for chunk in loader]))
+    ddf.format_and_translate()
+    return ddf
+
+def load_feather(filename):
+    return DiagDataFrame(pd.read_feather(filename))
+
+def load_datasets(subsets=['train', 'validate', 'test'], ddx=False, directory=DATA_DIR, csv=False, diseases=DISEASES_FR):
     load_metadata(directory)
     df = {}
     for ds in subsets:
-        df[ds] = DiagDataFrame(DATA_DIR + 'release_' + ds + '_patients.csv', ddx=ddx)
+        if csv:
+            df[ds] = load_csv(DATA_DIR + 'release_' + ds + '_patients.csv', ddx=ddx, diseases=diseases)
+        else:
+            df[ds] = load_feather(DATA_DIR + ds + '.feather')
     return df
-
-
