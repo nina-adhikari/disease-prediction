@@ -169,7 +169,7 @@ def load_datasets(subsets=['train', 'validate', 'test'], ddx=False, directory=DA
     df = {}
     for ds in subsets:
         if csv:
-            df[ds] = load_csv(DATA_DIR + 'release_' + ds + '_patients.csv', ddx=ddx, diseases=diseases)
+            df[ds] = load_csv(directory + 'release_' + ds + '_patients.csv', ddx=ddx, diseases=diseases)
         else:
-            df[ds] = load_feather(DATA_DIR + ds + '.feather')
+            df[ds] = load_feather(directory + ds + '.feather')
     return df
