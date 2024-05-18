@@ -9,3 +9,4 @@ setup(name='disease_prediction',
       # license='MIT',
       packages=['disease_prediction'],
       zip_safe=False)
+
