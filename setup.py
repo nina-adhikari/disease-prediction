@@ -7,6 +7,7 @@ setup(name='disease_prediction',
       author='Rebecca Ceppas de Castro, Fulya Tastan, Philip Barron, Mohammad Rafiqul Islam, Nina Adhikari, Viraj Meruliya',
       author_email='ninamadhikari@gmail.com',
       # license='MIT',
-      packages=['disease_prediction'],
+      # packages=['disease_prediction'],
+      packages=setuptools.find_packages(),
       zip_safe=False)
 
