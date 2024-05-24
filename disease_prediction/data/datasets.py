@@ -292,6 +292,8 @@ def load_datasets(subsets=['train', 'validate', 'test'], ddx=False, directory=DA
     for ds in subsets:
         if csv:
             df[ds] = load_csv(directory + 'release_' + ds + '_patients.csv', ddx=ddx, diseases=diseases)
+        elif ddx:
+            df[ds] = load_feather(directory + ds + '_with_ddx.feather')
         else:
             df[ds] = load_feather(directory + ds + '.feather')
     return df
