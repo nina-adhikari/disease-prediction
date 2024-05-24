@@ -6,12 +6,12 @@ import warnings
 DATA_DIR = ''
 
 DISEASES = ['HIV (initial infection)', 'Whooping cough', 'Chagas',
-    'Tuberculosis', 'Ebola', 'Influenza',
+    'Tuberculosis', 'Influenza',
     'SLE', 'Sarcoidosis', 'Anaphylaxis',
     'Allergic sinusitis', 'Localized edema']
 
 DISEASES_FR = ['VIH (Primo-infection)', 'Coqueluche', 'Chagas',
-    'Tuberculose', 'Ebola', 'Possible influenza ou syndrome virémique typique',
+    'Tuberculose', 'Possible influenza ou syndrome virémique typique',
     'Lupus érythémateux disséminé (LED)', 'Sarcoïdose', 'Anaphylaxie',
     'Rhinite allergique', 'Oedème localisé ou généralisé sans atteinte pulmonaire associée']
 
@@ -80,13 +80,30 @@ def pad_list(l):
     else:
         return l + [1]
 
+def escape_parentheses(strings):
+    """
+    This function takes a list of strings and escapes any parentheses in each string.
+
+    Args:
+    strings: A list of strings.
+
+    Returns:
+    A list of strings with escaped parentheses.
+    """
+    escaped_strings = []
+    for string in strings:
+        escaped_string = string.replace('(', '\(').replace(')', '\)')
+    escaped_strings.append(escaped_string)
+    return escaped_strings
+
 class DiagDataFrame(pd.DataFrame):
 
     _metadata = ["ddx"]
 
     def __init__(self, *args, **kwargs):
-        self.ddx = kwargs.pop('ddx', False)
+        temp_ddx = kwargs.pop('ddx', False)
         super().__init__(*args, **kwargs)
+        self.ddx = temp_ddx
 
     def format_and_translate(self):
         if self.ddx:
@@ -144,7 +161,7 @@ class DiagDataFrame(pd.DataFrame):
 
     def to_integers(self):
         for column in self.columns:
-            if column in SYMPTOMS_WITH_STR_ENTRIES + ['SEX', 'PATHOLOGY', 'INITIAL_EVIDENCE']:
+            if column in SYMPTOMS_WITH_STR_ENTRIES + ['SEX', 'PATHOLOGY', 'INITIAL_EVIDENCE', 'DIFFERENTIAL_DIAGNOSIS']:
                 continue
             self[column] = self[column].astype('int64')
 
@@ -154,10 +171,16 @@ class DiagDataFrame(pd.DataFrame):
 def load_csv(filename, diseases=DISEASES_FR, ddx=False):
     if ddx:
         loader = pd.read_csv(filename, iterator=True, chunksize=10000)
+        pattern = '|'.join(escape_parentheses(diseases))
+        ddf = DiagDataFrame(
+            pd.concat(
+                [chunk.loc[(chunk['PATHOLOGY'].isin(diseases)) | (chunk['DIFFERENTIAL_DIAGNOSIS'].str.contains(pattern, regex=True))] for chunk in loader]
+                ), ddx=ddx
+            )
     else:
         loader = pd.read_csv(filename, iterator=True, chunksize=10000,
                             usecols=lambda x: x != "DIFFERENTIAL_DIAGNOSIS")
-    ddf = DiagDataFrame(pd.concat([chunk[chunk['PATHOLOGY'].isin(diseases)] for chunk in loader]))
+        ddf = DiagDataFrame(pd.concat([chunk[chunk['PATHOLOGY'].isin(diseases)] for chunk in loader]), ddx=ddx)
     ddf.format_and_translate()
     return ddf
 
