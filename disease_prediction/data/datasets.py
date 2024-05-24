@@ -12,7 +12,7 @@ DISEASES = ['HIV (initial infection)', 'Whooping cough', 'Chagas',
     'Allergic sinusitis', 'Localized edema']
 
 DISEASES_FR = ['VIH (Primo-infection)', 'Coqueluche', 'Chagas',
-    'Tuberculose', 'Ebola', 'Possible influenza ou syndrome virémique typique',
+    'Tuberculose', 'Possible influenza ou syndrome virémique typique',
     'Lupus érythémateux disséminé (LED)', 'Sarcoïdose', 'Anaphylaxie',
     'Rhinite allergique', 'Oedème localisé ou généralisé sans atteinte pulmonaire associée']
 
