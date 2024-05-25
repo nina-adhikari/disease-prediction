@@ -1,6 +1,19 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+from disease_prediction.data import datasets as ds
+
+DIR = 'disease_prediction/data/'
+
+ds.load_metadata(DIR)
+
+st.text(ds.evidences)
+
+
+
+
+
+
 
 st.title('Uber pickups in NYC')
 
