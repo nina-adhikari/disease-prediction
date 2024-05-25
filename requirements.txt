@@ -1,5 +1,5 @@
 pandas
 numpy
 ast
-warning
+warnings
 streamlit
