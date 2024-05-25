@@ -2,20 +2,24 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from disease_prediction.data import datasets as ds
+import variables
 
 DIR = 'disease_prediction/data/'
 
 ds.load_metadata(DIR)
 
-st.text(ds.evidences)
+questions = [ds.evidences_en['question_en'].loc[symptom] for symptom in variables.SYMPTOMS]
 
+st.title('Disease prediction from symptoms')
 
+values = []
 
+for i in range(len(questions)):
+    values.append(st.checkbox(questions[i], False))
 
-
-
-
-st.title('Uber pickups in NYC')
+for i in range(len(values)):
+    if values[i]:
+        print(values[i])
 
 DATE_COLUMN = 'date/time'
 DATA_URL = ('https://s3-us-west-2.amazonaws.com/'
