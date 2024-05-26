@@ -72,18 +72,18 @@ with st.expander("Share additional info (optional):"):
                     aux_values[symp].append(0)
 
 
-with st.expander("Summary"):
-    st.write("Age: ", AGE)
-    st.write("Sex: ", SEX)
-    st.write("Other Symptoms:")
-    for i in range(len(values)):
-        if (values[i] != None and values[i] != False):
-            st.write('*', variables.SYMPTOMS[i], ': ', values[i])
-    for key in aux_values.keys():
-        vals = aux_values[key]
-        for i in range(len(vals)):
-            if (vals[i] != None and vals[i] != False):
-                st.write('*', variables.aux[key][i], ': ', vals[i])
+# with st.expander("Summary"):
+#     st.write("Age: ", AGE)
+#     st.write("Sex: ", SEX)
+#     st.write("Other Symptoms:")
+#     for i in range(len(values)):
+#         if (values[i] != None and values[i] != False):
+#             st.write('*', variables.SYMPTOMS[i], ': ', values[i])
+#     for key in aux_values.keys():
+#         vals = aux_values[key]
+#         for i in range(len(vals)):
+#             if (vals[i] != None and vals[i] != False):
+#                 st.write('*', variables.aux[key][i], ': ', vals[i])
         
 with open('disease_prediction/models/logistic.pkl', 'rb') as f:
     lr = pickle.load(f)
@@ -94,8 +94,8 @@ def predict(inputs):
     else:
         dataframe = pd.DataFrame(inputs, index=[0])
         dataframe = dataframe[variables.SYMPTOMS_IN_ORDER]
-        st.write(dataframe)
-        st.write(lr.feature_names_in_)
+        #st.write(dataframe)
+        #st.write(lr.feature_names_in_)
         return lr.predict(dataframe.astype(object))
 
 
@@ -121,9 +121,12 @@ if st.button(
         if data[key] == False or data[key] == None:
             data[key] = 0
     
-    st.write(data)
+    #st.write(data)
     answer = predict(data)
     if answer == False:
         st.write("Sorry, we could not fetch a diagnosis for you.")
     else:
-        st.write(answer)
+        with st.container(border=True):
+            st.write("Based on our model, you probably have the following disease:")
+            st.subheader(answer[0])
+    st.write("We hope you enjoyed using our model. Now please go consult a real doctor.")
