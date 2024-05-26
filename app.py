@@ -62,10 +62,14 @@ with st.expander("Share additional info (optional):"):
     for i in range(len(variables.SYMPTOMS)):
         symp = variables.SYMPTOMS[i]
         values.append(get_values(symp))
-        if symp in aux_values.keys() and values[i]:
-            with st.container(border=True):
+        if symp in aux_values.keys():
+            if values[i]:
+                with st.container(border=True):
+                    for j in range(len(variables.aux[symp])):
+                        aux_values[symp].append(get_values(variables.aux[symp][j]))
+            else:
                 for j in range(len(variables.aux[symp])):
-                    aux_values[symp].append(get_values(variables.aux[symp][j]))
+                    aux_values[symp].append(0)
 
 
 with st.expander("Summary"):
@@ -81,9 +85,19 @@ with st.expander("Summary"):
             if (vals[i] != None and vals[i] != False):
                 st.write('*', variables.aux[key][i], ': ', vals[i])
         
+with open('disease_prediction/models/logistic.pkl', 'rb') as f:
+    lr = pickle.load(f)
 
-def on_submit(button):
-    return True
+def predict(inputs):
+    if not lr:
+        return False
+    else:
+        dataframe = pd.DataFrame(inputs, index=[0])
+        dataframe = dataframe[variables.SYMPTOMS_IN_ORDER]
+        st.write(dataframe)
+        st.write(lr.feature_names_in_)
+        return lr.predict(dataframe.astype(object))
+
 
 if st.button(
     label=':green-background[Get diagnosis]',
@@ -96,13 +110,20 @@ if st.button(
         'INITIAL_EVIDENCE': INITIAL_EVIDENCE
     }
     for i in range(len(variables.SYMPTOMS)):
-        if values[i]:
-            data[variables.SYMPTOMS[i]] = values[i]
+        data[variables.SYMPTOMS[i]] = values[i]
+    for key in aux_values:
+        for i in range(len(aux_values[key])):
+            data[variables.aux[key][i]] = aux_values[key][i]
+    
+    for key in data:
+        if data[key] == True:
+            data[key] = 1
+        if data[key] == False or data[key] == None:
+            data[key] = 0
     
     st.write(data)
-
-with open('disease_prediction/models/logistic.pkl', 'rb') as f:
-    lr = pickle.load(f)
-
-def predict(inputs):
-    return True
+    answer = predict(data)
+    if answer == False:
+        st.write("Sorry, we could not fetch a diagnosis for you.")
+    else:
+        st.write(answer)
