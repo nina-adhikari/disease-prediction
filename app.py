@@ -4,6 +4,9 @@ import numpy as np
 import ast
 from disease_prediction.data import datasets as ds
 import variables
+import pickle
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
 
 DIR = 'disease_prediction/data/'
 
@@ -97,3 +100,9 @@ if st.button(
             data[variables.SYMPTOMS[i]] = values[i]
     
     st.write(data)
+
+with open('disease_prediction/models/logistic.pkl', 'rb') as f:
+    lr = pickle.load(f)
+
+def predict(inputs):
+    return True
