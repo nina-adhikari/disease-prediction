@@ -17,7 +17,48 @@ ds.load_metadata(DIR)
 # lesion_q = [ds.evidences_en['question_en'].loc[symptom] for symptom in variables.lesion_aux]
 # swelling_q = [ds.evidences_en['question_en'].loc[symptom] for symptom in variables.swelling_aux]
 
+values = []
+aux_values = {
+    'pain': [],
+    'lesions': [],
+    'swelling': [],
+}
+
+        
+with open('disease_prediction/models/logistic.pkl', 'rb') as f:
+    lr = pickle.load(f)
+
+def predict(inputs):
+    if not lr:
+        return False
+    else:
+        dataframe = pd.DataFrame(inputs, index=[0])
+        dataframe = dataframe[variables.SYMPTOMS_IN_ORDER]
+        #st.write(dataframe)
+        #st.write(lr.feature_names_in_)
+        return lr.predict(dataframe.astype(object))
+
+
+
+
+
+
+
+
+
 st.title('Disease prediction from symptoms')
+
+st.write(
+    """
+    Welcome to the app that uses machine learning to automatically diagnose
+    a disease based on a list of symptoms. This app is for educational,
+    research and entertainment purposes only. Nothing here is 
+    (even remotely) supposed to be medical advice.
+    """
+    )
+
+st.subheader("Intake form")
+
 
 AGE = st.number_input("*What is your age? (Round down to the nearest integer)", min_value=0, max_value=120)
 
@@ -31,16 +72,7 @@ INITIAL_EVIDENCE = st.selectbox(
     options=initial_titles,
     index=None,
     format_func= (lambda x: variables.SYMPTOM_PHRASES[x])
-    )
-
-
-
-values = []
-aux_values = {
-    'pain': [],
-    'lesions': [],
-    'swelling': [],
-}
+)
 
 
 def get_dt(symptom):
@@ -58,7 +90,7 @@ def get_values(symptom):
         else:
             return st.selectbox(q, ast.literal_eval(ds.evidences_en['possible_values'].loc[symptom]), index=None)
 
-with st.expander("Share additional info (optional):"):
+with st.expander("Share additional info:"):
     for i in range(len(variables.SYMPTOMS)):
         symp = variables.SYMPTOMS[i]
         values.append(get_values(symp))
@@ -84,23 +116,11 @@ with st.expander("Share additional info (optional):"):
 #         for i in range(len(vals)):
 #             if (vals[i] != None and vals[i] != False):
 #                 st.write('*', variables.aux[key][i], ': ', vals[i])
-        
-with open('disease_prediction/models/logistic.pkl', 'rb') as f:
-    lr = pickle.load(f)
 
-def predict(inputs):
-    if not lr:
-        return False
-    else:
-        dataframe = pd.DataFrame(inputs, index=[0])
-        dataframe = dataframe[variables.SYMPTOMS_IN_ORDER]
-        #st.write(dataframe)
-        #st.write(lr.feature_names_in_)
-        return lr.predict(dataframe.astype(object))
 
 
 if st.button(
-    label=':green-background[Get diagnosis]',
+    label='Get diagnosis',
     type='primary',
     #on_click=on_submit,
 ):
@@ -123,10 +143,12 @@ if st.button(
     
     #st.write(data)
     answer = predict(data)
-    if answer == False:
+    if (list(data.values()).count(0) > 85):
+        st.write("Sorry, there isn't enough data to generate a diagnosis.")
+    elif answer == False:
         st.write("Sorry, we could not fetch a diagnosis for you.")
     else:
         with st.container(border=True):
             st.write("Based on our model, you probably have the following disease:")
             st.subheader(answer[0])
-    st.write("We hope you enjoyed using our model. Now please go consult a real doctor.")
+            st.write("We hope you enjoyed using our model. Now please go consult a real doctor.")
