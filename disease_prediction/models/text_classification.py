@@ -352,8 +352,10 @@ def load_datasets():
 
 def setup_from_scratch():
     global DATASETS, LOGGER, TF_DATA, WRAPPER
-    DATASETS = load_datasets()
+
     LOGGER = ch.setup_logging()
+
+    DATASETS = load_datasets()
 
     WRAPPER = DiseaseClassificationModelWrapper(ch.MODEL_ARGS)
 
