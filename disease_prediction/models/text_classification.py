@@ -28,7 +28,7 @@ except (ModuleNotFoundError, ImportError):
             "`pip install tf-keras`."
         )
 
-import classification_helper as ch
+from . import classification_helper as ch
 
 LOGGER = None
 DATASETS = {'train': None, 'validation': None, 'test': None}
