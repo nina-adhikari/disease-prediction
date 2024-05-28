@@ -12,6 +12,7 @@ __pycache__/
 
 # Distribution / packaging
 ddx-dataset/
+temp_files/
 .DS_Store
 project_env/
 .Python
@@ -165,3 +166,4 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+.Rproj.user
