@@ -168,28 +168,33 @@ txt = myform.text_area("Describe your symptoms.")
 
 def query(payload):
     json = '{ input: ' + payload + ', options={wait_for_model: True} }'
-    try:
-        response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=1)
-    except requests.exceptions.HTTPError:
-        prg_text = "Calculating..."
-        mybar = myform.progress(0, prg_text)
-        for i in range(5):
-            mybar.progress((i+1)*5, prg_text)
-            time.sleep(i)
-        response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=1)
+    response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=1)
     return response.json()
 
 def on_submit(*args, **kwargs):
     if len(str(txt)) < 100:
         myform.write("There is too little text to generate output.")
         return
-    myform.write(txt)
+    #myform.write(txt)
     data = query(txt)
-    if data:
+    try:
         for entry in data[0]:
             myform.write(entry['label'] + ': ' + str(round(entry['score']*100, 2)))
-    else:
-        myform.write(data)
+        return
+    except:
+        prg_text = "Calculating..."
+        mybar = myform.progress(0, prg_text)
+        for i in range(5):
+            mybar.progress((i+1)*20, prg_text)
+            time.sleep(i)
+        mybar.empty()
+    data = query(txt)
+    try:
+        for entry in data[0]:
+            myform.write(entry['label'] + ': ' + str(round(entry['score']*100, 2)))
+        return
+    except:
+        myform.write("Sorry, we could not generate a diagnosis for you. Please try again later.")
 
 button = myform.form_submit_button("Submit", on_click=on_submit)
 
