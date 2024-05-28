@@ -330,7 +330,12 @@ class DiseaseClassificationModelWrapper:
         self.model.save_pretrained(output_dir)
 
 
-def load_datasets():
+def load_datasets(dataframe=None):
+    if dataframe is not None:
+        ds = {}
+        for key in dataframe.keys():
+            ds[key] = Dataset.from_pandas(dataframe[key])
+        return ds
     data_files = {"train": ch.DATA_ARGS.train_file, "validation": ch.DATA_ARGS.validation_file, "test": ch.DATA_ARGS.test_file}
     data_files = {key: file for key, file in data_files.items() if file is not None}
 
@@ -350,12 +355,12 @@ def load_datasets():
         ds = load_dataset("json", data_files=data_files, cache_dir=ch.MODEL_ARGS.cache_dir)
     return ds
 
-def setup_from_scratch():
+def setup_from_scratch(dataframe=None):
     global DATASETS, LOGGER, TF_DATA, WRAPPER
 
     LOGGER = ch.setup_logging()
 
-    DATASETS = load_datasets()
+    DATASETS = load_datasets(dataframe)
 
     WRAPPER = DiseaseClassificationModelWrapper(ch.MODEL_ARGS)
 
