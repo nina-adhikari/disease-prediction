@@ -52,7 +52,7 @@ def predict(inputs):
 
 
 
-st.title('Disease prediction from symptoms')
+st.title('Disease diagnosis from symptoms')
 
 st.write(
     """
@@ -162,39 +162,90 @@ if st.button(
 
 st.subheader("Text entry (experimental)")
 
-myform = st.form('myform')
+st.write("This part of the app uses a fine-tuned transformer to classify \
+         a text input into one of ten diseases. This functionality has a lower accuracy \
+         than the part above and should be treated with even more caution.")
 
-txt = myform.text_area("Describe your symptoms.")
+#myform = st.form('myform')
+
+myform = st.container(border=True)
+
+myform.write("Describe your symptoms in plain English using at least 50 characters. \
+             You can use the following text as an example:")
+
+myform.write("> *I have had a persistent cough for the last three days. \
+             The cough sometimes includes blood. I am also suffering from fatigue \
+             and a loss of appetite.*")
+
+
+txt = myform.text_area("Describe your symptoms.",
+                       placeholder='Minimum 50 characters.',
+)
+
+
 
 def query(payload):
     json = '{ input: ' + payload + ', options={wait_for_model: True} }'
     response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=1)
     return response.json()
 
-def on_submit(*args, **kwargs):
-    if len(str(txt)) < 100:
-        myform.write("There is too little text to generate output.")
+def show_results(data):
+    for entry in data[0]:
+        continue
+    st.write("#### Results")
+    for entry in data[0]:
+        label = entry['label']
+        value = entry['score']
+        if value >= 0.05:
+            st.progress(
+                text="* " + label + ': ' + str(round(value*100, 2)) + ' \%',
+                value=value
+                )
+    st.divider()
+    st.write("#### Disclaimer")
+    st.html("""
+            <small>Remember, these results are <b>not</b> medical advice. This model is trained to 
+             calculate probabilities for each of a list of ten diseases, all adding up to 1, 
+            <i>no matter the input</i>. For example, the input text
+            """)
+    st.markdown(
+        "> <small>*I’m sorry, but I’m a large language model trained by OpenAl, and I don’t have \
+            access to the internet or any external information sources. \
+            I can only generate responses based on the text that I was trained on, \
+            which has a knowledge cutoff of 2021. I can’t provide links to recent news \
+            articles or other information that may have been published since then*",
+            unsafe_allow_html=True
+        )
+    st.html("<small>yields the following results:")
+    dis = ['Anaphylaxis', 'HIV (initial infection)', 'SLE', 'Chagas', 'Influenza', 'Sarcoidosis']
+    probs = [28.64, 20.84, 15.6, 12.7, 8.4, 5.2]
+    for i in range(len(dis)):
+        st.progress(
+            text=dis[i] + ': ' + str(probs[i]) + ' \%',
+            value=probs[i]/100
+        )
+
+def on_submit():
+    if len(str(txt)) < 50:
+        st.write("There is too little text to generate output.")
         return
-    #myform.write(txt)
+    #st.write(txt)
     data = query(txt)
     try:
-        for entry in data[0]:
-            myform.write(entry['label'] + ': ' + str(round(entry['score']*100, 2)))
+        show_results(data)
         return
     except:
-        prg_text = "Calculating..."
-        mybar = myform.progress(0, prg_text)
-        for i in range(5):
-            mybar.progress((i+1)*20, prg_text)
-            time.sleep(i)
-        mybar.empty()
+        with st.spinner('Calculating...'):
+            time.sleep(5)
     data = query(txt)
     try:
-        for entry in data[0]:
-            myform.write(entry['label'] + ': ' + str(round(entry['score']*100, 2)))
+        show_results(data)
         return
     except:
-        myform.write("Sorry, we could not generate a diagnosis for you. Please try again later.")
+        st.write("Sorry, we could not generate a diagnosis for you. Please try again later.")
 
-button = myform.form_submit_button("Submit", on_click=on_submit)
-
+if myform.button("Submit", type='primary', ):
+    new_text = txt
+    with myform.container(border=True):
+        on_submit()
+    #form_button = False
