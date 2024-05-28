@@ -7,8 +7,14 @@ import variables
 import pickle
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
+import requests
+import time
 
 DIR = 'disease_prediction/data/'
+
+TOKEN = st.secrets['HF_TOKEN']
+API_URL = "https://api-inference.huggingface.co/models/ninaa510/distilbert-finetuned-medical-diagnosis"
+HEADERS = {"Authorization": f"Bearer {TOKEN}"}
 
 ds.load_metadata(DIR)
 
@@ -150,5 +156,40 @@ if st.button(
     else:
         with st.container(border=True):
             st.write("Based on our model, you probably have the following disease:")
-            st.subheader(answer[0])
+            st.write('#### ' + answer[0])
             st.write("We hope you enjoyed using our model. Now please go consult a real doctor.")
+
+
+st.subheader("Text entry (experimental)")
+
+myform = st.form('myform')
+
+txt = myform.text_area("Describe your symptoms.")
+
+def query(payload):
+    json = '{ input: ' + payload + ', options={wait_for_model: True} }'
+    try:
+        response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=1)
+    except requests.exceptions.HTTPError:
+        prg_text = "Calculating..."
+        mybar = myform.progress(0, prg_text)
+        for i in range(5):
+            mybar.progress((i+1)*5, prg_text)
+            time.sleep(i)
+        response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=1)
+    return response.json()
+
+def on_submit(*args, **kwargs):
+    if len(str(txt)) < 100:
+        myform.write("There is too little text to generate output.")
+        return
+    myform.write(txt)
+    data = query(txt)
+    if data:
+        for entry in data[0]:
+            myform.write(entry['label'] + ': ' + str(round(entry['score']*100, 2)))
+    else:
+        myform.write(data)
+
+button = myform.form_submit_button("Submit", on_click=on_submit)
+
