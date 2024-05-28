@@ -1,7 +1,7 @@
 import json
 
 import numpy as np
-from datasets import Dataset, load_dataset
+from datasets import Dataset, DatasetDict, load_dataset
 from scipy.special import softmax
 
 from transformers import (
@@ -332,9 +332,10 @@ class DiseaseClassificationModelWrapper:
 
 def load_datasets(dataframe=None):
     if dataframe is not None:
-        ds = {}
+        df = {}
         for key in dataframe.keys():
-            ds[key] = Dataset.from_pandas(dataframe[key])
+            df[key] = Dataset.from_pandas(dataframe[key])
+        ds = DatasetDict(df)
         return ds
     data_files = {"train": ch.DATA_ARGS.train_file, "validation": ch.DATA_ARGS.validation_file, "test": ch.DATA_ARGS.test_file}
     data_files = {key: file for key, file in data_files.items() if file is not None}
