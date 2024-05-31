@@ -29,7 +29,7 @@ Medical professionals, epidemiology experts, health organizations (e.g. WHO and 
   - **Test**: The best model with its optimal hyperparameters was evaluated on the unseen test data.
 - We experimented with an alternative approach using natural language processing (NLP), where the data was used to generate 1-3-sentence-long paragraphs of text, and a new dataset was prepared with this text and the disease label. A DistilBERT transformer was fine-tuned on this dataset, and the fine-tuned model was evaluated on the test set.
 
-[!modelling approach](flow_chart.png)
+![flow_chart](https://github.com/nina-adhikari/disease_prediction/assets/59798314/9d4f82f5-af0f-4d15-a434-817929ac1f93)
 
 ## Results and Outcomes
 - Random Forest was found to be the best model, with the following scores:
