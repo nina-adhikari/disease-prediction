@@ -24,17 +24,18 @@ Medical professionals, epidemiology experts, health organizations (e.g. WHO and 
 
 ## Modeling
 - We built several multiclass classification models that identify the disease based on symptoms and antecedents. For final model selection, we adopted the following strategy for training and evaluation:
--- **Features**: We used _ number of features including (initial evidence, pain levels, travel details,...)
--- **Training**: The original had its own train, validation, and test split. To randomize the splits for our models, we combined the training and validation datasets, and then performed an 80% (train) - 20% (validation) split. The different models were trained and validated respectively on these datasets.
--- **Test**: The best model with its optimal hyperparameters was evaluated on the unseen test data.
+  - **Features**: We used _ number of features including (initial evidence, pain levels, travel details,...)
+  - **Training**: The original had its own train, validation, and test split. To randomize the splits for our models, we combined the training and validation datasets, and then performed an 80% (train) - 20% (validation) split. The different models were trained and validated respectively on these datasets.
+  - **Test**: The best model with its optimal hyperparameters was evaluated on the unseen test data.
 - We experimented with an alternative approach using natural language processing (NLP), where the data was used to generate 1-3-sentence-long paragraphs of text, and a new dataset was prepared with this text and the disease label. A DistilBERT transformer was fine-tuned on this dataset, and the fine-tuned model was evaluated on the test set.
 
 ## Results and Outcomes
 - Random Forest was found to be the best model, with the following scores:
--- F1: 59.58%
--- Precision: 75.83%
--- Recall: 59.04%
--- Accuracy: 60.40%
+  - F1: 59.58%
+  - Precision: 75.83%
+  - Recall: 59.04%
+  - Accuracy: 60.40%
+
 A similar performance was also achieved by XGBoost. We chose Random Forest since it is simpler and more interpretable, which would be useful to stakeholders. The feature importance function of Random Forest shows that ‘INITIAL_EVIDENCE’ is the significant input in classifying the disease.
 - The fine-tuned text classification transformer achieved an accuracy of 58.68% on the test set.
 - We made a web app that can be used to interact with the models, available at [disease-pred.streamlit.app](https://disease-pred.streamlit.app/). 
