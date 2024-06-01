@@ -53,7 +53,10 @@ class SavePretrainedCallback(keras.callbacks.Callback):
 
 
 class DiseaseClassificationModelWrapper:
-    
+    """
+    Wrapper class for handling disease classification models.
+    """
+
     def __init__(
             self,
             model_args,
@@ -62,6 +65,16 @@ class DiseaseClassificationModelWrapper:
             tokenizer=None,
             config=None
             ):
+        """
+        Initializes the wrapper with model and data arguments.
+
+        Args:
+            model_args: Model configuration arguments.
+            data_args: Data processing arguments.
+            training_args: Training arguments.
+            tokenizer: Tokenizer object.
+            config: Model configuration object.
+        """
         self.model_args = model_args
         self.data_args = data_args
         self.training_args = training_args
@@ -81,18 +94,31 @@ class DiseaseClassificationModelWrapper:
         self.num_labels = None
         
 
-    # If you've passed us a training set, we try to infer your labels from it
     def set_labels(self, ds):
+        """
+        Sets the labels for the model based on the dataset.
+
+        Args:
+            ds: Dataset containing label information.
+
+        Returns:
+            None
+        """
         if "train" in ds:
             self.label_list = ds["train"].unique("label")
             self.label_list.sort()  # Let's sort it for determinism
             self.num_labels = len(self.label_list)
-        # If you haven't passed a training set, we read label info from the saved model (this happens later)
         else:
             self.num_labels = None
             self.label_list = None
 
     def set_config(self):
+        """
+        Sets the model configuration based on the arguments.
+
+        Returns:
+            None
+        """
         if self.model_args.config_name:
             config_path = self.model_args.config_name
         else:
@@ -116,11 +142,26 @@ class DiseaseClassificationModelWrapper:
             )
 
     def setup(self, ds):
+        """
+        Setup method to set labels, configuration, and load pretrained model.
+
+        Args:
+            ds: Dataset containing label information.
+
+        Returns:
+            None
+        """
         self.set_labels(ds)
         self.set_config()
         self.load_pretrained_model()
 
     def load_pretrained_model(self):
+        """
+        Loads the pretrained model based on the configuration.
+
+        Returns:
+            None
+        """
         self.model = TFAutoModelForSequenceClassification.from_pretrained(
             self.model_args.model_name_or_path,
             config=self.config,
