@@ -1,13 +1,24 @@
-from transformers import TFTrainingArguments
+"""
+This script defines classes and functions for setting up logging, handling training and model arguments, 
+and configuring data processing for fine-tuning a Hugging Face transformer model.
+"""
+
 import logging
 from dataclasses import dataclass, field
 from typing import Optional
-
+from transformers import TFTrainingArguments
 
 
 DIRECTORY = ''
 
+
 def setup_logging():
+    """
+    Setup logging configuration.
+
+    Returns:
+        logger: Logger object configured with specified settings.
+    """
     logger = logging.getLogger(__name__)
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -17,15 +28,12 @@ def setup_logging():
     return logger
 
 
-
 @dataclass
 class DataTrainingArguments:
     """
-    Arguments pertaining to what data we are going to input our model for training and eval.
+    Arguments pertaining to data input for model training and evaluation.
 
-    Using `HfArgumentParser` we can turn this class
-    into argparse arguments to be able to specify them on
-    the command line.
+    Using `HfArgumentParser`, this class can be turned into argparse arguments for command line specification.
     """
 
     train_file: Optional[str] = field(
@@ -34,7 +42,9 @@ class DataTrainingArguments:
     validation_file: Optional[str] = field(
         default=None, metadata={"help": "A csv or a json file containing the validation data."}
     )
-    test_file: Optional[str] = field(default=None, metadata={"help": "A csv or a json file containing the test data."})
+    test_file: Optional[str] = field(
+        default=None, metadata={"help": "A csv or a json file containing the test data."}
+    )
 
     max_seq_length: int = field(
         default=128,
@@ -87,6 +97,9 @@ class DataTrainingArguments:
     )
 
     def __post_init__(self):
+        """
+        Post initialization method to ensure input file extensions are valid and consistent.
+        """
         train_extension = self.train_file.split(".")[-1].lower() if self.train_file is not None else None
         validation_extension = (
             self.validation_file.split(".")[-1].lower() if self.validation_file is not None else None
@@ -103,7 +116,7 @@ class DataTrainingArguments:
 @dataclass
 class ModelArguments:
     """
-    Arguments pertaining to which model/config/tokenizer we are going to fine-tune from.
+    Arguments pertaining to the model, configuration, and tokenizer for fine-tuning.
     """
 
     model_name_or_path: str = field(
@@ -144,9 +157,8 @@ class ModelArguments:
     )
 
 
-
 TRAINING_ARGS = TFTrainingArguments(
-    output_dir=DIRECTORY+'output',
+    output_dir=DIRECTORY + 'output',
     overwrite_output_dir=True,
     do_train=True,
     do_eval=True,
@@ -158,10 +170,9 @@ MODEL_ARGS = ModelArguments(
     tokenizer_name="distilbert/distilbert-base-cased",
 )
 DATA_ARGS = DataTrainingArguments(
-    train_file= DIRECTORY+"text-train.json",
-    validation_file= DIRECTORY+"text-validate.json",
-    test_file= DIRECTORY+"text-test.json",
-    #max_seq_length=128,
+    train_file=DIRECTORY + "text-train.json",
+    validation_file=DIRECTORY + "text-validate.json",
+    test_file=DIRECTORY + "text-test.json",
     overwrite_cache=True,
     max_train_samples=10000,
     max_val_samples=1000,
