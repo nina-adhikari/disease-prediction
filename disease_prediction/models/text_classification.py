@@ -174,6 +174,16 @@ class DiseaseClassificationModelWrapper:
             self.config = self.model.config
 
     def preprocess_data(self, ds):
+        """
+        Preprocesses the dataset by tokenizing texts, mapping labels to IDs, and ensuring consistency between labels and model configurations.
+
+        Args:
+            ds: Dataset to be preprocessed.
+
+        Returns:
+            ds: Preprocessed dataset.
+        """
+        
         column_names = {col for cols in ds.column_names.values() for col in cols}
         non_label_column_names = [name for name in column_names if name != "label"]
 
@@ -217,6 +227,16 @@ class DiseaseClassificationModelWrapper:
         return ds
 
     def preprocess_function(self, examples):
+        """
+        Preprocesses individual examples by tokenizing texts and mapping labels to IDs.
+
+        Args:
+            examples: Individual example from the dataset.
+
+        Returns:
+            result: Preprocessed example.
+        """        
+        
         # Tokenize the texts
         args = (
             (examples['sentence1'],)
@@ -229,6 +249,16 @@ class DiseaseClassificationModelWrapper:
         return result
 
     def convert_to_tf_dataset(self, ds):
+        """
+        Converts the preprocessed dataset into TensorFlow datasets for training, validation, and testing.
+
+        Args:
+            ds: Preprocessed dataset.
+
+        Returns:
+            tf_data: TensorFlow datasets for training, validation, and testing.
+        """
+        
         tf_data = {}
         num_replicas = self.training_args.strategy.num_replicas_in_sync
         dataset_options = tf.data.Options()
@@ -261,6 +291,16 @@ class DiseaseClassificationModelWrapper:
         return tf_data
     
     def prepare_optimizer_loss_compilation(self, tf_data=None):
+        """
+        Prepares the optimizer and loss functions for model compilation.
+
+        Args:
+            tf_data: TensorFlow datasets.
+
+        Returns:
+            None
+        """
+        
         if self.training_args is not None and self.training_args.do_train and tf_data is not None:
             num_train_steps = len(tf_data["train"]) * self.training_args.num_train_epochs
             num_warmup_steps = self.training_args.warmup_steps if self.training_args.warmup_steps > 0 else int(num_train_steps * self.training_args.warmup_ratio) if self.training_args.warmup_ratio > 0 else 0
@@ -282,6 +322,18 @@ class DiseaseClassificationModelWrapper:
         self.model.compile(optimizer=optimizer, metrics=metrics)
 
     def prepare_for_training(self, ds, data_args, training_args):
+        """
+        Prepares the model, optimizer, and datasets for training.
+
+        Args:
+            ds: Dataset for training.
+            data_args: Data processing arguments.
+            training_args: Training arguments.
+
+        Returns:
+            tf_data: TensorFlow datasets for training, validation, and testing.
+        """
+        
         self.data_args = data_args
         self.training_args = training_args
         tf_data = self.convert_to_tf_dataset(self.preprocess_data(ds))
@@ -290,6 +342,13 @@ class DiseaseClassificationModelWrapper:
         return tf_data
 
     def prepare_push_to_hub_and_model_card(self):
+        """
+        Prepares for pushing the fine-tuned model to the Hugging Face Model Hub and creating a model card.
+
+        Returns:
+            None
+        """
+        
         push_to_hub_model_id = self.training_args.push_to_hub_model_id or f"{self.model_args.model_name_or_path.split('/')[-1]}-finetuned-text-classification"
         model_card_kwargs = {"finetuned_from": self.model_args.model_name_or_path, "tasks": "text-classification"}
 
@@ -304,6 +363,17 @@ class DiseaseClassificationModelWrapper:
         ] if self.training_args.push_to_hub else []
     
     def train(self, train_data, validation_data=None):
+        """
+        Trains the model.
+
+        Args:
+            train_data: Training dataset.
+            validation_data: Validation dataset.
+
+        Returns:
+            None
+        """
+        
         if train_data is not None:
             self.model.fit(
                 train_data,
@@ -313,6 +383,16 @@ class DiseaseClassificationModelWrapper:
             )
 
     def evaluate(self, validation_data=None):
+        """
+        Evaluates the model.
+
+        Args:
+            validation_data: Validation dataset.
+
+        Returns:
+            None
+        """
+        
         if validation_data is not None:
             LOGGER.info("Computing metrics on validation data...")
             loss, accuracy = self.model.evaluate(validation_data)
@@ -327,10 +407,32 @@ class DiseaseClassificationModelWrapper:
                     writer.write(json.dumps(eval_dict))
     
     def train_and_validate(self, train_data, validation_data=None):
+        """
+        Trains the model and performs evaluation.
+
+        Args:
+            train_data: Training dataset.
+            validation_data: Validation dataset.
+
+        Returns:
+            None
+        """
+        
         self.train(train_data, validation_data)
         self.evaluate(validation_data)
     
     def predict(self, test_data, output_dir=None):
+        """
+        Performs predictions on the test dataset.
+
+        Args:
+            test_data: Test dataset.
+            output_dir: Output directory to save predictions.
+
+        Returns:
+            None
+        """
+        
         if test_data is not None:
             LOGGER.info("Doing predictions on test dataset...")
 
@@ -353,6 +455,16 @@ class DiseaseClassificationModelWrapper:
     
 
     def predict_sentence(self, sentence):
+        """
+        Performs prediction on a single sentence.
+
+        Args:
+            sentence: Input sentence.
+
+        Returns:
+            predictions: Predicted probabilities for each class.
+        """
+        
         ds = Dataset.from_list([{'sentence1': sentence}])
         ds = ds.map(self.preprocess_function, batched=False, load_from_cache_file=False)
         
@@ -373,6 +485,16 @@ class DiseaseClassificationModelWrapper:
         #return dict(label_list, predictions)
     
     def save_pretrained(self, output_dir):
+        """
+        Saves the fine-tuned model.
+
+        Args:
+            output_dir: Output directory to save the model.
+
+        Returns:
+            None
+        """
+        
         self.model.save_pretrained(output_dir)
 
 
