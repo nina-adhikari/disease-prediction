@@ -1,3 +1,8 @@
+"""
+This file defines the classes and functions we need for finetuning the DistilBERT transformer.
+The code has been adapted from https://github.com/huggingface/transformers/blob/main/examples/tensorflow/text-classification/run_text_classification.py
+"""
+
 import json
 
 import numpy as np
@@ -331,12 +336,22 @@ class DiseaseClassificationModelWrapper:
 
 
 def load_datasets(dataframe=None):
+    """
+    Load datasets from either a DataFrame or local files specified in the configuration.
+
+    Args:
+        dataframe (Optional[pandas.DataFrame]): A DataFrame containing dataset information.
+
+    Returns:
+        DatasetDict: A dictionary of datasets loaded from either DataFrame or local files.
+    """
     if dataframe is not None:
         df = {}
         for key in dataframe.keys():
             df[key] = Dataset.from_pandas(dataframe[key])
         ds = DatasetDict(df)
         return ds
+
     data_files = {"train": ch.DATA_ARGS.train_file, "validation": ch.DATA_ARGS.validation_file, "test": ch.DATA_ARGS.test_file}
     data_files = {key: file for key, file in data_files.items() if file is not None}
 
@@ -356,7 +371,17 @@ def load_datasets(dataframe=None):
         ds = load_dataset("json", data_files=data_files, cache_dir=ch.MODEL_ARGS.cache_dir)
     return ds
 
+
 def setup_from_scratch(dataframe=None):
+    """
+    Setup logger, load datasets, setup model wrapper, and prepare data for training.
+
+    Args:
+        dataframe (Optional[pandas.DataFrame]): A DataFrame containing dataset information.
+
+    Returns:
+        None
+    """
     global DATASETS, LOGGER, TF_DATA, WRAPPER
 
     LOGGER = ch.setup_logging()
@@ -371,19 +396,49 @@ def setup_from_scratch(dataframe=None):
 
 
 def train():
+    """
+    Train the configured model using the prepared training data.
+
+    Returns:
+        None
+    """
     WRAPPER.train(TF_DATA["train"], TF_DATA["validation"])
 
+
 def evaluate():
+    """
+    Evaluate the trained model using the validation data.
+
+    Returns:
+        None
+    """
     WRAPPER.evaluate(TF_DATA['validation'])
 
+
 def predict():
+    """
+    Make predictions using the trained model on the test data.
+
+    Returns:
+        None
+    """
     WRAPPER.predict(TF_DATA['test'])
 
+
 def setup_from_finetuned(directory):
+    """
+    Setup model wrapper from a finetuned model directory.
+
+    Args:
+        directory (str): Path to the directory containing the finetuned model.
+
+    Returns:
+        None
+    """
     model_args = ch.ModelArguments(
         model_name_or_path=directory,
         tokenizer_name="distilbert/distilbert-base-cased",
-        )
+    )
     WRAPPER = DiseaseClassificationModelWrapper(model_args)
     WRAPPER.load_pretrained_model()
     WRAPPER.prepare_optimizer_loss_compilation()
