@@ -61,6 +61,14 @@ A similar performance was also achieved by XGBoost. We chose Random Forest since
 The functionality of both our models is available to try out at our [Streamlit web app](https://disease-pred.streamlit.app/).
 
 ## Using the code
+
+All of the code below is available in the following notebook for convenient use:
+
+| File | Colab |
+|--|--|
+| [notebooks/following_readme_instructions.ipynb](https://github.com/nina-adhikari/disease_prediction/blob/main/notebooks/following_readme_instructions.ipynb) | <a target="_blank" href="https://colab.research.google.com/github/nina-adhikari/disease_prediction/blob/main/notebooks/following_readme_instructions.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
+
 You can directly install the repository with the following command-line command:
 
     pip install git+https://github.com/nina-adhikari/disease_prediction
